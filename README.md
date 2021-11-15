@@ -109,40 +109,57 @@ $ extract_barcoded_reads_from_bam.py tgut_alex_testis_barcoded_checked_1_paired_
 
 ### 3b. Option2
 
-Extract reads from a BAM file
-```
-$ samtools view tgut_alex_liver_checked_1_mapped.bam | cut -f1,10,11 | sed 's/^/@/' | sed 's/\t/\n/' | sed 's/\t/\n+\n/' > mapped_reads_liver.fastq 
-```
+#### Extract mapped reads in a BAM file
 
-Extract names from read pair
+Replace "MAPPING.bam" by your file's name
 
 ```
-$ grep "@ST-E00" mapped_reads_liver.fastq | sort | uniq | sed 's/@//g' > mapped_reads_liver_names_uniq.txt
+$ samtools view MAPPING.bam | cut -f1,10,11 | sed 's/^/@/' | sed 's/\134t/\134n/' | sed 's/\134t/\134n+\134n/' >> mapped_reads.fastq
 ```
 
-Select read pairs with barcode 
+#### Get read names from the mapped reads
+
+Change the start of the read id. Here, it is "@ST-E00"
 
 ```
-$ seqtk subseq tgut_alex_liver_barcoded.fastq.gz lista_uniq.txt > tgut_alex_liver_ccnd3.fastq
+$ grep "@ST-E00" mapped_reads.fastq | sort | uniq | sed 's/@//g' >> mapped_reads_names.txt
 ```
 
-Select unique barcodes
+#### Extract reads from the file to get barcodes
+
+Replace barcoded.fastq by the name of your file after the "longranger basic" command (see above). It also works for gzipped files.
 
 ```
-$ grep "BX:Z:" tgut_alex_liver_ccnd3.fastq | awk {'print $2'} | sort | uniq > barcodes.txt
+$ seqtk subseq barcoded.fastq mapped_reads_names.txt >> mapped_reads_names.fastq
 ```
 
-Select reads with the list of barcodes
+#### Get list uniq barcodes
 
 ```
-$ zgrep -f barcodes.txt tgut_alex_liver_barcoded.fastq.gz > barcoded_reads.txt
+$ grep "BX:Z:" mapped_reads_names.fastq | awk {'print $2'} | sort | uniq >> mapped_reads_barcodes.txt
 ```
 
-Extract read names
+#### Generate a list of read names with a barcode in the previous list
 
 ```
-$ awk {'print $1'} barcoded_reads.txt | sed 's/@//g' | sort | uniq > barcoded_reads_-all.txt
+$ grep -Ff mapped_reads_barcodes.txt barcoded.fastq >> barcodes_names.txt
 ```
+
+(Alternatively, use zgrep for gzipped barcoded files)
+
+#### Extract read IDs
+
+```
+$ awk 'NR%2==1' barcodes_names.txt | awk {'print $1'} | sed 's/@//g' >> barcodes_reads.txt
+```
+
+#### Extract reads
+
+```
+$ seqtk subseq barcoded.fastq barcodes_reads.txt >> barcodes_reads.fastq
+```
+
+XXXX
 
 Select reads
 
