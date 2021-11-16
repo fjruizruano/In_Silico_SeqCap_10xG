@@ -1,4 +1,4 @@
-# Assembly germline-restricted chromosome from 10xG barcode libraries
+# In silico sequence capture to assembly germline-restricted chromosomes sequences from 10xGenomics Chromium libraries
 
 This protocol was applied for the manuscript by Pei et al. (2021) "Occasional paternal inheritance of the germline-restricted chromosome in songbirds", accepted in PNAS.
 
@@ -93,26 +93,42 @@ AAFFFJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
 
 After that, we can perform a trimming with Trimmomatic to remove low quality nucleotides and adapters.
 
-## 3. Mapping reads to the reference.
+## 3. First round of mapping: against the ref and alt sequences
 
-Since the 10xG reads contain introns and the reference sequences do not contain them, we need to use a mapper considering soft clipping for the definitive maps. Here we use SSAHA2, since we can easily control the mapping legth and identity. It can be run in a multithread way with this:
+Since the 10xG reads contain introns and the reference sequences do not contain them, we need to use a mapper considering soft clipping for the definitive maps. Here we use SSAHA2, since we can easily control the mapping legth and identity. It can be run in a multithread way with this commands:
 
+```
+$ ls barcoded_trim_1.fastq barcoded_trim_2.fastq > list.txt
+$ ssaha2_run_multi.py list.txt sequences_ref_alt.fasta 20
+```
+Where 20 is the number of threads you can choose.
 
+It will generates a sorted and indexed BAM file with the suffix "mapped".
 
+Then, we only keep reads mapping from a BAM file into Alt sequences:
 
+```
+$ mapped.bam > bam_list.txt
+$ grep "alt" sequences_ref_alt.txt | sed 's/>//g' > alt_list.txt
+$ extract_seq_bam.py bam_list.txt alt_list.txt sequences_ref_alt.txt
+```
+It generates a BAM file with the suffix "mapped.sel.sort"
 
-
-## 3. Extract reads
+## 4. Extract reads
 
 You can do it in two alternative ways.
 
-### 3a. Using a custom script with the pipeline
+### 4a. Using a custom script with the pipeline
+
+You need to indicate the BAM file, the barcoded fastq file from "longranger basic" and the beginning of the read IDs
 
 ```
-$ extract_barcoded_reads_from_bam.py MAPPING.bam barcoded.fastq.gz @ST-E00
+$ extract_barcoded_reads_from_bam.py mapped.sel.sort.bam barcoded.fastq.gz @ST-E00
 ```
 
-### 3b. Running each step of the previous script manually
+### 4b. Running each step of the previous script manually
+
+Alternatively, you can run each step from the last script separately.
 
 #### Extract mapped reads in a BAM file
 
@@ -158,8 +174,6 @@ $ zgrep -Ff mapped_reads_barcodes.txt barcoded.fastq.gz >> barcodes_names.txt
 $ awk 'NR%2==1' barcodes_names.txt | awk {'print $1'} | sed 's/@//g' >> barcodes_reads.txt
 ```
 
-### 4. Assembly with Supernova2
-
 Extract reads from the raw 10xG Chromium reads:
 
 ```
@@ -167,26 +181,34 @@ $ seqtk subseq P8503_1005_S17_L007_I1_001.fastq.gz barcodes_reads.txt > P8503_10
 $ seqtk subseq P8503_1005_S17_L007_R1_001.fastq.gz barcodes_reads.txt > P8503_1005_S17_L007_R1_001.fastq
 $ seqtk subseq P8503_1005_S17_L007_R2_001.fastq.gz barcodes_reads.txt > P8503_1005_S17_L007_R2_001.fastq
 ```
-
-Move FASTQ files to other location, compress them as GZ and run Supernova2 assembly:
+Then we prepare the FASTQ files in a separate folder moving them to a new folder and compressin them as GZ:
 
 ```
 $ mkdir reads
-$ mv *q reads
+$ cd reads
+$ mv ../*q .
+$ gzip *q
+```
+
+### 5. Assembly with Supernova2
+
+Run Supernova2 assembly with the following options:
+
+```
 $ supernova run --accept-extreme-coverage --maxreads="all" --id=sample345 --fastqs=/PATH/TO/SELECTED/READS
 ```
 
-### BONUS. Mask positions in the reference with mapped reads in other library
+This will generate a Fasta file with the assembled reads. We can search for contigs matching the genes we used as a reference with BLAST, Exonerate or other local aligner
 
-This is a complementary approach to mask position in the reference.
+### 6. (Optional) Second round of mappings, barcode extraction and assembly
+
+This step is only necessary in case we need longer contigs. So we can perform several round of assembly. However, from now on, the mappings are a bit different.
+
+For the second round of mappings we will use the assembled and selected Supernova2 contigs. In this case we have introns and intergenic regions from the GRC.
+
+Mask positions in the reference with mapped reads in the soma library with Bedtools
 
 ```
 $ bedtools bamtobed -i MAPPING.bam > MAPPING.bed
-$ bedtools maskfasta -fi reference.fasta -bed MAPPING.bed -fo reference_mask.fasta
-```
-
-### BONUS 2. Keep reads mapping from a BAM file into specific sequences in a list
-
-```
-$ extract_seq_bam.py ListOfIndexedBamFiles ListOfSequences ReferenceFasta
+$ bedtools maskfasta -fi supernova_sel.fasta -bed MAPPING.bed -fo supernova_sel_mask.fasta
 ```
