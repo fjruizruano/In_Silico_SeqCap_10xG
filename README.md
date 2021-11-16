@@ -1,14 +1,20 @@
 # Extract 10xG barcodes
 Protocol to detect and extract reads with a specific 10xG barcode
 
+## 0. Required files
+
+A 10xG Chromium library:<br />
+P8503_1005_S17_L007_I1_001.fastq.gz<br />
+P8503_1005_S17_L007_R1_001.fastq.gz<br />
+P8503_1005_S17_L007_R2_001.fastq.gz<br />
+
+A BAM file of mappings using your favourie mapper:<br />
+MAPPING.bam<br />
+
 ## 1. Remove barcodes from 10XG Chromium libraries from the left read and add them to the read ID
 
-Files:<br />
-P7359_105_S5_L008_R2_001.fastq.gz<br />
-P7359_105_S5_L008_R1_001.fastq.gz<br />
-P7359_105_S5_L008_I1_001.fastq.gz<br />
+Run this longranger command using your preferred name for the --id flag:
 
-Command:
 ```
 $ longranger basic --id=sample345 --fastqs=/PATH/TO/10XG/READS
 ```
@@ -98,20 +104,19 @@ AAFFFJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
 
 ## 3. Extract reads
 
-### 3a. Option1
+You can do it in two alternative ways.
 
-New script for the next steps!!!!
+### 3a. Using a custom script with the pipeline
+
 ```
-$ extract_barcoded_reads_from_bam.py tgut_alex_testis_barcoded_checked_1_paired_10M_mapped.bam barcoded.fastq
+$ extract_barcoded_reads_from_bam.py tgut_alex_testis_barcoded_checked_1_paired_10M_mapped.bam barcoded.fastq @ST-E00
 ```
 
----------------------------------------------------------------------------------------------------
-
-### 3b. Option2
+### 3b. Running each step of the previous script manually
 
 #### Extract mapped reads in a BAM file
 
-Replace "MAPPING.bam" by your file's name
+Replace "MAPPING.bam" by your file's name.
 
 ```
 $ samtools view MAPPING.bam | cut -f1,10,11 | sed 's/^/@/' | sed 's/\134t/\134n/' | sed 's/\134t/\134n+\134n/' >> mapped_reads.fastq
@@ -119,7 +124,7 @@ $ samtools view MAPPING.bam | cut -f1,10,11 | sed 's/^/@/' | sed 's/\134t/\134n/
 
 #### Get read names from the mapped reads
 
-Change the start of the read id. Here, it is "@ST-E00"
+Change the start of the read ID. Here, it is "@ST-E00".
 
 ```
 $ grep "@ST-E00" mapped_reads.fastq | sort | uniq | sed 's/@//g' >> mapped_reads_names.txt
@@ -153,34 +158,17 @@ $ grep -Ff mapped_reads_barcodes.txt barcoded.fastq >> barcodes_names.txt
 $ awk 'NR%2==1' barcodes_names.txt | awk {'print $1'} | sed 's/@//g' >> barcodes_reads.txt
 ```
 
-#### Extract reads
-
-```
-$ seqtk subseq barcoded.fastq barcodes_reads.txt >> barcodes_reads.fastq
-```
-
-XXXX
-
-Select reads
-
-```
-$ seqtk subseq tgut_alex_liver_barcoded.fastq.gz barcoded_reads.all.txt > barcoded_reads_all.fastq
-
-$ ls barcoded_reads_all.fastq > lili.txt
-
-$ unshuffle.py lili.txt
-```
-
-### 3c. Option3
--------
-MACROCOMMAND!!!!
-```
-$ seqtk subseq tgut_alex_testis_barcoded.fastq.gz lista_uniq.txt > tgut_alex_liver_ccnd3.fastq && grep "BX:Z:" med20_mapped_reads_sequence.fastq > sel && awk {'print $2'} sel | sort | uniq > barcodes.txt; zgrep -f barcodes.txt tgut_alex_testis_barcoded.fastq.gz > barcoded_reads.txt; awk {'print $1'} barcoded_reads.txt | sed 's/@//g' | sort | uniq > barcoded_reads.all.txt; seqtk subseq tgut_alex_testis_barcoded.fastq.gz barcoded_reads.all.txt > barcoded_reads_all.fastq; ls barcoded_reads_all.fastq > lala.txt; unshuffle.py lala.txt
-```
-
---------------
-
 ### 4. Assembly with Supernova2
+
+Extract reads from the raw 10xG Chromium reads:
+
+```
+$ seqtk subseq P8503_1005_S17_L007_I1_001.fastq.gz barcodes_reads.txt > P8503_1005_S17_L007_I1_001.fastq
+$ seqtk subseq P8503_1005_S17_L007_R1_001.fastq.gz barcodes_reads.txt > P8503_1005_S17_L007_R1_001.fastq
+$ seqtk subseq P8503_1005_S17_L007_R2_001.fastq.gz barcodes_reads.txt > P8503_1005_S17_L007_R2_001.fastq
+```
+
+Run Supernova2 assembly
 
 ```
 $ supernova run --accept-extreme-coverage --maxreads="all" --id=sample345 --fastqs=/PATH/TO/SELECTED/READS
