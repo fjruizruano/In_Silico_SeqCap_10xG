@@ -3,13 +3,17 @@ Protocol to detect and extract reads with a specific 10xG barcode
 
 ## 0. Required files
 
-A 10xG Chromium library:<br />
-P8503_1005_S17_L007_I1_001.fastq.gz<br />
-P8503_1005_S17_L007_R1_001.fastq.gz<br />
-P8503_1005_S17_L007_R2_001.fastq.gz<br />
+A 10xG Chromium library:
+```
+P8503_1005_S17_L007_I1_001.fastq.gz
+P8503_1005_S17_L007_R1_001.fastq.gz
+P8503_1005_S17_L007_R2_001.fastq.gz
+```
 
-A BAM file of mappings using your favourie mapper:<br />
-MAPPING.bam<br />
+A BAM file of mappings using your favourie mapper:
+```
+MAPPING.bam
+```
 
 ## 1. Remove barcodes from 10XG Chromium libraries from the left read and add them to the read ID
 
@@ -83,7 +87,7 @@ You can do it in two alternative ways.
 ### 3a. Using a custom script with the pipeline
 
 ```
-$ extract_barcoded_reads_from_bam.py tgut_alex_testis_barcoded_checked_1_paired_10M_mapped.bam barcoded.fastq @ST-E00
+$ extract_barcoded_reads_from_bam.py MAPPING.bam barcoded.fastq.gz @ST-E00
 ```
 
 ### 3b. Running each step of the previous script manually
@@ -106,10 +110,10 @@ $ grep "@ST-E00" mapped_reads.fastq | sort | uniq | sed 's/@//g' >> mapped_reads
 
 #### Extract reads from the file to get barcodes
 
-Replace barcoded.fastq by the name of your file after the "longranger basic" command (see above). It also works for gzipped files.
+Replace barcoded.fastq.gz by the name of your file after the "longranger basic" command (see above). It also works for gzipped files.
 
 ```
-$ seqtk subseq barcoded.fastq mapped_reads_names.txt >> mapped_reads_names.fastq
+$ seqtk subseq barcoded.fastq.gz mapped_reads_names.txt >> mapped_reads_names.fastq
 ```
 
 #### Get list of uniq barcodes
@@ -121,10 +125,10 @@ $ grep "BX:Z:" mapped_reads_names.fastq | awk {'print $2'} | sort | uniq >> mapp
 #### Generate a list of read names with a barcode in the previous list
 
 ```
-$ grep -Ff mapped_reads_barcodes.txt barcoded.fastq >> barcodes_names.txt
+$ zgrep -Ff mapped_reads_barcodes.txt barcoded.fastq.gz >> barcodes_names.txt
 ```
 
-(Alternatively, use zgrep for gzipped barcoded files)
+(Alternatively, use grep for non-gzipped barcoded files)
 
 #### Extract read IDs
 
@@ -142,15 +146,17 @@ $ seqtk subseq P8503_1005_S17_L007_R1_001.fastq.gz barcodes_reads.txt > P8503_10
 $ seqtk subseq P8503_1005_S17_L007_R2_001.fastq.gz barcodes_reads.txt > P8503_1005_S17_L007_R2_001.fastq
 ```
 
-Run Supernova2 assembly
+Move FASTQ files to other location, compress them as GZ and run Supernova2 assembly:
 
 ```
+$ mkdir reads
+$ mv *q reads
 $ supernova run --accept-extreme-coverage --maxreads="all" --id=sample345 --fastqs=/PATH/TO/SELECTED/READS
 ```
 
 ### BONUS. Mask positions in the reference with mapped reads in other library
 
-This is a complementary approach to mask position in the reference
+This is a complementary approach to mask position in the reference.
 
 ```
 $ bedtools bamtobed -i MAPPING.bam > MAPPING.bed
