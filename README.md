@@ -162,3 +162,9 @@ This is a complementary approach to mask position in the reference.
 $ bedtools bamtobed -i MAPPING.bam > MAPPING.bed
 $ bedtools maskfasta -fi reference.fasta -bed MAPPING.bed -fo reference_mask.fasta
 ```
+
+### BONUS 2. Keep reads mapping from a BAM file into specific sequences in a list
+
+```
+$ extract_seq_bam.py ListOfIndexedBamFiles ListOfSequences ReferenceFasta
+```
