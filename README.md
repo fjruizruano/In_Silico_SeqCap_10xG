@@ -101,7 +101,7 @@ Since the 10xG reads contain introns and the reference sequences do not contain 
 $ ls barcoded_trim_1.fastq barcoded_trim_2.fastq > list.txt
 $ ssaha2_run_multi.py list.txt sequences_ref_alt.fasta 20
 ```
-Where 20 is the number of threads you can choose.
+Where "20" is the number of threads you can choose.
 
 It will generates a sorted and indexed BAM file with the suffix "mapped".
 
@@ -174,7 +174,7 @@ $ zgrep -Ff mapped_reads_barcodes.txt barcoded.fastq.gz >> barcodes_names.txt
 $ awk 'NR%2==1' barcodes_names.txt | awk {'print $1'} | sed 's/@//g' >> barcodes_reads.txt
 ```
 
-Extract reads from the raw 10xG Chromium reads:
+## 5. Extract reads from the raw 10xG Chromium reads:
 
 ```
 $ seqtk subseq P8503_1005_S17_L007_I1_001.fastq.gz barcodes_reads.txt > P8503_1005_S17_L007_I1_001.fastq
@@ -190,7 +190,7 @@ $ mv ../*q .
 $ gzip *q
 ```
 
-### 5. Assembly with Supernova2
+## 6. Assembly with Supernova2
 
 Run Supernova2 assembly with the following options:
 
@@ -200,15 +200,29 @@ $ supernova run --accept-extreme-coverage --maxreads="all" --id=sample345 --fast
 
 This will generate a Fasta file with the assembled reads. We can search for contigs matching the genes we used as a reference with BLAST, Exonerate or other local aligner
 
-### 6. (Optional) Second round of mappings, barcode extraction and assembly
+### 7. (Optional) Second round of mappings, barcode extraction and assembly
 
 This step is only necessary in case we need longer contigs. So we can perform several round of assembly. However, from now on, the mappings are a bit different.
 
-For the second round of mappings we will use the assembled and selected Supernova2 contigs. In this case we have introns and intergenic regions from the GRC.
+For the second round of mappings, we will use the assembled and selected Supernova2 contigs. In this case, we have introns and intergenic regions identical to the A chromosome paralog. To avoid mappings in such as regions we first map soma reads agaist with more stringent conditions:
 
-Mask positions in the reference with mapped reads in the soma library with Bedtools
+```
+$ ls barcoded_trim_1.fastq barcoded_trim_2.fastq > list.txt
+$ ssaha2_run_multi_id99_len80.py list.txt supernova_sel.fasta 20
+```
+
+Then, mask positions in the reference with mapped reads in the soma library with Bedtools
 
 ```
 $ bedtools bamtobed -i MAPPING.bam > MAPPING.bed
 $ bedtools maskfasta -fi supernova_sel.fasta -bed MAPPING.bed -fo supernova_sel_mask.fasta
 ```
+
+After this, we map the testis reads against the masked reference:
+
+```
+$ ls barcoded_trim_1.fastq barcoded_trim_2.fastq > list.txt
+$ ssaha2_run_multi_id99_len80.py list.txt supernova_sel_mask.fasta 20
+```
+
+Then repeat steps 5 and 6 to extract reads with selected barcodes and assemble them.
