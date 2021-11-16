@@ -2,7 +2,7 @@
 
 This protocol was applied for the manuscript by Pei et al. (2021) "Occasional paternal inheritance of the germline-restricted chromosome in songbirds", accepted in PNAS.
 
-It tries to assembly the sequence of few genes in a germline-restricted chromosome (GRC), reducing the interferences of their paralogs in the regular (A) chromosomes.
+It tries to assemble the sequence of few genes in a germline-restricted chromosome (GRC), reducing the interferences of their paralogs in the regular (A) chromosomes.
 
 ## 0. Required files
 
@@ -95,7 +95,7 @@ After that, we can perform a trimming with Trimmomatic to remove low quality nuc
 
 ## 3. First round of mapping: against the ref and alt sequences
 
-Since the 10xG reads contain introns and the reference sequences do not contain them, we need to use a mapper considering soft clipping for the definitive maps. Here we use SSAHA2, since we can easily control the mapping legth and identity. It can be run in a multithread way with this commands:
+Since the 10xG reads contain introns and the reference sequences do not contain them, we need to use a mapper considering soft clipping for the definitive maps. Here we use SSAHA2, since we can easily control the mapping length and identity. It can be run in a multithread way with this commands:
 
 ```
 $ ls barcoded_trim_1.fastq barcoded_trim_2.fastq > list.txt
@@ -103,7 +103,7 @@ $ ssaha2_run_multi.py list.txt sequences_ref_alt.fasta 20
 ```
 Where "20" is the number of threads you can choose.
 
-It will generates a sorted and indexed BAM file with the suffix "mapped".
+It generates a sorted and indexed BAM file with the suffix "mapped".
 
 Then, we only keep reads mapping from a BAM file into Alt sequences:
 
@@ -204,7 +204,7 @@ This will generate a Fasta file with the assembled reads. We can search for cont
 
 This step is only necessary in case we need longer contigs. So we can perform several round of assembly. However, from now on, the mappings are a bit different.
 
-For the second round of mappings, we will use the assembled and selected Supernova2 contigs. In this case, we have introns and intergenic regions identical to the A chromosome paralog. To avoid mappings in such as regions we first map soma reads agaist with more stringent conditions:
+For the second round of mappings, we will use the assembled and selected Supernova2 contigs. In this case, we have introns and intergenic regions identical to the A chromosome paralog. To avoid mappings in such as regions we first map soma reads against with more stringent conditions:
 
 ```
 $ ls barcoded_trim_1.fastq barcoded_trim_2.fastq > list.txt
