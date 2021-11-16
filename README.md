@@ -231,4 +231,4 @@ $ ssaha2_run_multi_id99_len80.py list.txt supernova_sel_mask.fasta 20
 
 Then repeat steps 5 and 6 to extract reads with selected barcodes and assemble them.
 
-Step 7 can be repeated several times until if necessary.
+Step 7 can be repeated several times if necessary.
