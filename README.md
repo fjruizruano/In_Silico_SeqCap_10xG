@@ -95,7 +95,11 @@ CCTTGCAGAACCCCTTGGCCAAGCAGAACAAACAATTACAGAACTCTCTCACGTATTTTCTAATGATTTGGAGTATATAC
 AAFFFJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJFJJJJJJJJJJJJJJJJJJJFJFJJJJJJJJJJJJJJJJA<FJ<
 ```
 
-After that, we can perform a trimming with Trimmomatic to remove low quality nucleotides and adapters.
+After that, we can perform a trimming with Trimmomatic to remove low quality nucleotides and adapters:
+
+```
+$ trimmomatic PE -phred33 barcoded_1.fastq barcoded_2.fastq barcoded_trim_1.fastq barcoded_trim_2.fastq barcoded_unpaired_1.fastq barcoded_unpaired_2.fastq ILLUMINACLIP:/path/to/Trimmomatic-0.32/adapters/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:100
+```
 
 ## 3. First round of mapping: against the ref and alt sequences
 
