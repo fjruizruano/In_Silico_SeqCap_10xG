@@ -1,21 +1,32 @@
-# Extract 10xG barcodes
-Protocol to detect and extract reads with a specific 10xG barcode
+# Assembly germline-restricted chromosome from 10xG barcode libraries
+
+This protocol was applied for the manuscript by Pei et al. (2021) "Occasional paternal inheritance of the germline-restricted chromosome in songbirds", accepted in PNAS.
+
+It tries to assembly the sequence of few genes in a germline-restricted chromosome (GRC), reducing the interferences of their paralogs in the regular (A) chromosomes.
 
 ## 0. Required files
 
-A 10xG Chromium library:
+* A 10xG Chromium library for testis (with GRC):
 ```
 P8503_1005_S17_L007_I1_001.fastq.gz
 P8503_1005_S17_L007_R1_001.fastq.gz
 P8503_1005_S17_L007_R2_001.fastq.gz
 ```
 
-A BAM file of mappings using your favourie mapper:
+* Other 10xG Chromium library for a somatic tissue (without GRC) from the same individual:
 ```
-MAPPING.bam
+P8503_1004_S14_L006_I1_001.fastq.gz
+P8503_1004_S14_L006_R1_001.fastq.gz
+P8503_1004_S14_L006_R2_001.fastq.gz
 ```
 
-## 1. Remove barcodes from 10XG Chromium libraries from the left read and add them to the read ID
+* A fasta file with the version of the A chromosomes (Ref) and the same one with GRC-specific alleles (Alt) found using a SNP calling.
+
+```
+sequences_ref_alt.fasta
+```
+
+## 1. Remove barcodes from both 10XG Chromium libraries from the left read and add them to the read ID
 
 Run this longranger command using your preferred name for the --id flag:
 
@@ -25,7 +36,7 @@ $ longranger basic --id=sample345 --fastqs=/PATH/TO/10XG/READS
 
 It generates a “barcoded.fastq.gz” file. Please, note that the reads in the beginning of the file do not show barcodes! 
 
-## 2. Unshuffle reads
+## 2. Unshuffle reads in both libraries
 
 Since we got a single “barcoded.fastq.gz” file with both the left and right reads interleaved:
 
@@ -79,6 +90,17 @@ CCTTGCAGAACCCCTTGGCCAAGCAGAACAAACAATTACAGAACTCTCTCACGTATTTTCTAATGATTTGGAGTATATAC
 +
 AAFFFJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJFJJJJJJJJJJJJJJJJJJJFJFJJJJJJJJJJJJJJJJA<FJ<
 ```
+
+After that, we can perform a trimming with Trimmomatic to remove low quality nucleotides and adapters.
+
+## 3. Mapping reads to the reference.
+
+Since the 10xG reads contain introns and the reference sequences do not contain them, we need to use a mapper considering soft clipping for the definitive maps. Here we use SSAHA2, since we can easily control the mapping legth and identity. It can be run in a multithread way with this:
+
+
+
+
+
 
 ## 3. Extract reads
 
