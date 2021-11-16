@@ -44,39 +44,13 @@ CCTTGCAGAACCCCTTGGCCAAGCAGAACAAACAATTACAGAACTCTCTCACGTATTTTCTAATGATTTGGAGTATATAC
 AAFFFJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJFJJJJJJJJJJJJJJJJJJJFJFJJJJJJJJJJJJJJJJA<FJ<
 ```
 
-We need to split it in two files: one for the left reads and other for the right reads. Using, for example this commands:
+We need to split it in two files: one for the left reads and other for the right reads. Using, for example this external script https://github.com/ndaniel/fusioncatcher/blob/master/bin/unshuffle.py:
 
 ```
-$ aunpack barcoded.fastq.gz
-$ unshuffle.py list.txt
-
-$ awk '{ if (NR%4==1) { print $1"/1" } else { print } }'  uben_heart_bc_sel_1.fastq > uben_heart_bc_sel_checked_1.fastq
-$ awk '{ if (NR%4==1) { print $1"/2" } else { print } }'  uben_heart_bc_sel_2.fastq > uben_heart_bc_sel_checked_2.fastq
+$ unshuffle.py -i barcoded.fastq.gz -f barcoded_1.fastq -r barcoded_2.fastq
 ```
 
-----
-
-For big files
-
-```
-$ split -l 10000000 barcoded.fastq
-```
-
-[xaa, xab,...]
-
-```
-$ gzip -dc barcoded_1_paired.fastq.gz | split -l 10000000  - split_ --filter='gzip > $FILE.fastq.gz'
-```
-
---------
-
-For compressed files:
-
-awk '{ if (NR%4==1) { print $1"/2" } else { print } }' <(gzip -dc lib_2_unpaired.fastq.gz) | gzip > tgut2_l_s14_unpaired_2.fastq.gz
-
----------------------------------------------------------------------------------------------------
-
-This is the barcoded_1.fastq file:
+This is the resulting barcoded_1.fastq file:
 
 ```
 @ST-E00214:160:H277TCCXY:7:2211:28036:31951 BX:Z:AAACACCAGCGATATA-1
@@ -138,7 +112,7 @@ Replace barcoded.fastq by the name of your file after the "longranger basic" com
 $ seqtk subseq barcoded.fastq mapped_reads_names.txt >> mapped_reads_names.fastq
 ```
 
-#### Get list uniq barcodes
+#### Get list of uniq barcodes
 
 ```
 $ grep "BX:Z:" mapped_reads_names.fastq | awk {'print $2'} | sort | uniq >> mapped_reads_barcodes.txt
@@ -174,10 +148,11 @@ Run Supernova2 assembly
 $ supernova run --accept-extreme-coverage --maxreads="all" --id=sample345 --fastqs=/PATH/TO/SELECTED/READS
 ```
 
-### 5. Masking positions with mapped reads in soma
+### BONUS. Mask positions in the reference with mapped reads in other library
+
+This is a complementary approach to mask position in the reference
 
 ```
-$ bedtools bamtobed -i heart_id99_len80.bam > heart_id99_len80.bed
-$ bedtools maskfasta -fi ugra_round1_supernova_sel.fasta -bed heart_id99_len80.bed -fo ugra_round1_supernova_sel_mask.fasta
+$ bedtools bamtobed -i MAPPING.bam > MAPPING.bed
+$ bedtools maskfasta -fi reference.fasta -bed MAPPING.bed -fo reference_mask.fasta
 ```
-
