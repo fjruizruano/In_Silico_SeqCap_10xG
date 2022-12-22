@@ -1,6 +1,6 @@
 # In silico sequence capture to assembly germline-restricted chromosomes sequences from 10xGenomics Chromium libraries
 
-This protocol was applied for the manuscript by Pei et al. (2022) "Occasional paternal inheritance of the germline-restricted chromosome in songbirds", PNAS, 119(4):e2103960119 https://doi.org/10.1073/pnas.2103960119.
+This protocol was applied for the paper by Pei et al. (2022) "Occasional paternal inheritance of the germline-restricted chromosome in songbirds", PNAS, 119(4):e2103960119 https://doi.org/10.1073/pnas.2103960119.
 
 It tries to assemble the sequence of few genes in a germline-restricted chromosome (GRC), reducing the interferences of their paralogs in the regular (A) chromosomes.
 
